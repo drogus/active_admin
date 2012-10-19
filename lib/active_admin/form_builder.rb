@@ -76,24 +76,27 @@ module ActiveAdmin
           form_buffers.last << template.content_tag(:h3, object.class.reflect_on_association(association).klass.model_name.human(:count => 1.1))
           inputs options, &form_block
 
+          model_name = object.class.reflect_on_association(association).klass.model_name
+          placeholder = "NEW_#{model_name}_RECORD"
+
           # Capture the ADD JS
           js = with_new_form_buffer do
             inputs_for_nested_attributes  :for => [association, object.class.reflect_on_association(association).klass.new],
                                           :class => "inputs has_many_fields",
                                           :for_options => {
-                                            :child_index => "NEW_RECORD"
+                                            :child_index => placeholder
                                           }, &form_block
           end
 
           js = template.escape_javascript(js)
-          js = template.link_to I18n.t('active_admin.has_many_new', :model => object.class.reflect_on_association(association).klass.model_name.human), "#", :onclick => "$(this).before('#{js}'.replace(/NEW_RECORD/g, new Date().getTime())); return false;", :class => "button"
+          js = template.link_to I18n.t('active_admin.has_many_new', :model => model_name.human), "#", :onclick => "$(this).before('#{js}'.replace(/#{placeholder}/g, new Date().getTime())); return false;", :class => "button"
 
           form_buffers.last << js.html_safe
         end
       end
       form_buffers.last << content.html_safe
     end
-    
+
     def semantic_errors(*args)
       content = with_new_form_buffer { super }
       form_buffers.last << content.html_safe unless content.nil?
@@ -146,9 +149,9 @@ module ActiveAdmin
       if ::Object.const_defined?(input_class_name)
         input_class_name.constantize
       elsif ActiveAdmin::Inputs.const_defined?(input_class_name)
-        active_admin_input_class_name(as).constantize 
+        active_admin_input_class_name(as).constantize
       elsif Formtastic::Inputs.const_defined?(input_class_name)
-        standard_input_class_name(as).constantize 
+        standard_input_class_name(as).constantize
       else
         raise Formtastic::UnknownInputError
       end
